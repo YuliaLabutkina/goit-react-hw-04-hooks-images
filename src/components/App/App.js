@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 
 import fetchImgWithQuery from '../../services';
@@ -11,7 +11,7 @@ import Modal from '../Modal';
 import { Container, ErrorText } from './AppStyle';
 
 function App() {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(null);
   const [page, setPage] = useState(1);
   const [imgArray, setImgArray] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,37 +19,33 @@ function App() {
   const [largeImageURL, setLargeImageURL] = useState('');
   const [error, setError] = useState(null);
 
-  const onSubmitForm = async data => {
+  useEffect(() => {
+    async function fetchMyAPI() {
+      try {
+        const request = await fetchImgWithQuery(search, page);
+        await setImgArray(prevArray => [...prevArray, ...request]);
+        scrollImg();
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      };
+    };
+
+    if (search) fetchMyAPI();
+  }, [search, page]);
+
+  const onSubmitForm = data => {
     setSearch(data);
     setPage(1);
     setIsLoading(true);
     setError(null);
-
-    try {
-      const request = await fetchImgWithQuery(data);
-      setImgArray([...request]);
-      setPage(prevPage => prevPage + 1);
-      scrollImg();
-    } catch (error) {
-      setError(error);
-    } finally {
-      setIsLoading(false);
-    }
+    setImgArray([]);
   };
 
-  const uploadMorePhotos = async () => {
+  const uploadMorePhotos = () => {
     setIsLoading(true);
-
-    try {
-      const request = await fetchImgWithQuery(search, page);
-      setImgArray(prevArray => [...prevArray, ...request]);
-      setPage(prevPage => prevPage + 1);
-      scrollImg();
-    } catch (error) {
-      setError(error);
-    } finally {
-      setIsLoading(false);
-    }
+    setPage(prevPage => prevPage + 1);
   };
 
   const scrollImg = () => {
